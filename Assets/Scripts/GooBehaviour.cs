@@ -30,15 +30,22 @@ public class GooBehaviour : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
     {
+        Reset();
+        MaxVelocity = 15;
+        StartContraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+    }
+
+    void Reset() //set up the player at start on begin or after death
+    {
         transform.position = StartPos.transform.position;
+        rigidbody.velocity = Vector3.zero;
         IsAlive = true;
         LaunchPointStart = Vector3.zero;
         LaunchPointCurrent = Vector3.zero;
         ShootDirection = Vector3.zero;
         ShootMagnitude = 0;
         myState = GooState.AIRBORNE;
-        StartContraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
-        MaxVelocity = 15;
+        
     }
 	
 	// Update is called once per frame
@@ -55,7 +62,7 @@ public class GooBehaviour : MonoBehaviour {
             {
                 //unfreeze constraints
                 rigidbody.constraints = StartContraints;
-
+                //rigidbody.isKinematic = false;
                 rigidbody.velocity = ShootDirection * ShootMagnitude;
                 
                 myState = GooState.AIRBORNE;
@@ -64,6 +71,7 @@ public class GooBehaviour : MonoBehaviour {
             {
                 //freeze contraints
                 rigidbody.constraints = RigidbodyConstraints.FreezeAll;
+                //rigidbody.isKinematic = true;
             }
 
             if (rigidbody.velocity.magnitude > MaxVelocity)
@@ -75,6 +83,7 @@ public class GooBehaviour : MonoBehaviour {
         else //if DEAD
         {
             //run the reset
+            Reset();
         }
     }
 
@@ -84,9 +93,29 @@ public class GooBehaviour : MonoBehaviour {
         if (myState == GooState.AIRBORNE)
         {
             //check what type of object you hit
+            
+            //Normal Wall
             if (col.collider.tag == "NormalWall")
             {
                 myState = GooState.STUCK;
+            }
+
+            //Trap
+            if (col.collider.tag == "Trap")
+            {
+                IsAlive = false;
+            }
+
+            //Slippery
+            if (col.collider.tag == "SlipperyWall")
+            {
+                myState = GooState.SLIDE;
+            }
+
+            //Shock
+            if (col.collider.tag == "ShockWall")
+            {
+                rigidbody.velocity = rigidbody.velocity.normalized * MaxVelocity;
             }
         }
     }
@@ -96,6 +125,15 @@ public class GooBehaviour : MonoBehaviour {
         if (myState == GooState.AIRBORNE)
         {
             transform.position += col.contacts[0].normal * 0.1f;
+        }
+    }
+    void OnCollisionExit(Collision col)
+    {
+        if (myState == GooState.SLIDE)
+        {
+            myState = GooState.AIRBORNE;
+            PowerArrow.transform.position = ArrowStartPos;
+            PowerArrow.transform.localScale = new Vector3(1, 1, 1);
         }
     }
 
@@ -112,9 +150,13 @@ public class GooBehaviour : MonoBehaviour {
             //calc the velocity, ready for release
             LaunchPointCurrent = Input.mousePosition;
             ShootDirection = (LaunchPointStart - LaunchPointCurrent).normalized;
-            ShootMagnitude = (LaunchPointStart - LaunchPointCurrent).magnitude / 8;
+            ShootMagnitude = (LaunchPointStart - LaunchPointCurrent).magnitude / 10;
+            if (ShootMagnitude > MaxVelocity)
+            {
+                ShootMagnitude = MaxVelocity;
+            }
             
-            PowerArrow.transform.position = transform.position;
+            
 
             float rad = Mathf.Atan2(ShootDirection.y, ShootDirection.x); // In radians
             float deg = rad * (180 / Mathf.PI);
@@ -124,8 +166,8 @@ public class GooBehaviour : MonoBehaviour {
             rot.y = 0;
             rot.z = deg - 90;
             PowerArrow.transform.rotation = Quaternion.Euler(rot);
-            PowerArrow.transform.localScale = new Vector3(1,1,1) * ShootMagnitude / 4;
-            
+            PowerArrow.transform.localScale = new Vector3(1,1,1) * ShootMagnitude / 2;
+            PowerArrow.transform.position = transform.position - (ShootDirection * 2);
         }
         //has it released
         if (Input.GetMouseButtonUp(0))
