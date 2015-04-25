@@ -117,6 +117,13 @@ public class GooBehaviour : MonoBehaviour {
             {
                 rigidbody.velocity = rigidbody.velocity.normalized * MaxVelocity;
             }
+
+            //End Level
+            if (col.collider.tag == "Exit")
+            {
+                //FIX THIS
+                IsAlive = false;
+            }
         }
     }
     void OnCollisionStay(Collision col)
