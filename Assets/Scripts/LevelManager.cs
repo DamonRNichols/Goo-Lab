@@ -16,7 +16,7 @@ public class LevelManager : MonoBehaviour {
     public GameObject CheckPoint4;
     public GameObject LevelEnd;
 
-    public int CurrCP = 0;
+    public int CurrCP;
     public bool IsAtEnd = false;
 
 

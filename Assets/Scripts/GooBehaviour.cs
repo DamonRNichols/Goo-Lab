@@ -33,12 +33,14 @@ public class GooBehaviour : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
     {
+        maintainedZPos = CheckPointsManager.TutorialArray[0].transform.position.z;
+        currCheckPoint = CheckPointsManager.CurrCP;
+
         Reset();
         MaxVelocity = 15;
         StartContraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
         //maintainedZPos = StartPos.transform.position.z;
-        maintainedZPos = CheckPointsManager.TutorialArray[0].transform.position.z;
-        currCheckPoint = CheckPointsManager.CurrCP;
+        
     }
 
     void Reset() //set up the player at start on begin or after death
@@ -57,6 +59,11 @@ public class GooBehaviour : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
     {
+        if (Input.GetButton("Cancel"))
+        {
+            Application.Quit();
+        }
+
         if (IsAlive)
         {
             //check if unaligned Z coord
