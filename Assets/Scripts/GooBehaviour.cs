@@ -19,7 +19,10 @@ public class GooBehaviour : MonoBehaviour {
     private Vector3 LaunchPointCurrent;
     private float MaxVelocity;
 
-    public GameObject StartPos;
+    //public GameObject StartPos;
+    public LevelManager CheckPointsManager;
+    private float maintainedZPos; //has ball shifted from Z (can happen when launched from a round surface)
+    private int currCheckPoint;
 
     public GameObject PowerArrow;
     private Vector3 ArrowStartPos = new Vector3(0, 0, 5);
@@ -33,11 +36,14 @@ public class GooBehaviour : MonoBehaviour {
         Reset();
         MaxVelocity = 15;
         StartContraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+        //maintainedZPos = StartPos.transform.position.z;
+        maintainedZPos = CheckPointsManager.TutorialArray[0].transform.position.z;
+        currCheckPoint = CheckPointsManager.CurrCP;
     }
 
     void Reset() //set up the player at start on begin or after death
     {
-        transform.position = StartPos.transform.position;
+        transform.position = CheckPointsManager.TutorialArray[currCheckPoint].transform.position;
         rigidbody.velocity = Vector3.zero;
         IsAlive = true;
         LaunchPointStart = Vector3.zero;
@@ -53,6 +59,10 @@ public class GooBehaviour : MonoBehaviour {
     {
         if (IsAlive)
         {
+            //check if unaligned Z coord
+            if (transform.position.z != maintainedZPos)
+                transform.position = new Vector3(transform.position.x, transform.position.y, maintainedZPos);
+
             if (myState != GooState.AIRBORNE)
                 CheckMouseState();
 
@@ -90,7 +100,7 @@ public class GooBehaviour : MonoBehaviour {
     //Collision: have the collider smaller than the ball so that it looks like it sticks onto objects
     void OnCollisionEnter(Collision col)
     {
-        if (myState == GooState.AIRBORNE)
+        if (myState == GooState.AIRBORNE || myState == GooState.SLIDE)
         {
             //check what type of object you hit
             
@@ -121,8 +131,7 @@ public class GooBehaviour : MonoBehaviour {
             //End Level
             if (col.collider.tag == "Exit")
             {
-                //FIX THIS
-                IsAlive = false;
+                UpdateCheckPoint();
             }
         }
     }
@@ -188,5 +197,10 @@ public class GooBehaviour : MonoBehaviour {
         }
     }
 
-
+    void UpdateCheckPoint()
+    {
+        CheckPointsManager.SetNextSpawnPoint(CheckPointsManager.TutorialArray);
+        currCheckPoint = CheckPointsManager.CurrCP;
+        Reset();
+    }
 }
